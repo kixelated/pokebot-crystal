@@ -1,97 +1,124 @@
 local newbark = {}
 
-local player = require "game.player"
+local ram = require "game.ram"
+local input = require "game.input"
 local dialog = require "game.dialog"
 
+--[[
+local directionMap = {
+	Down = 0,
+	Up = 4,
+	Left = 8,
+	Right = 12,
+}
+
+local function face(direction)
+	local value = directionMap[direction]
+	if value ~= ram.byte(0xd4de) then
+		input.press(direction)
+	end
+end
+
+local function move(direction, times)
+	face(direction)
+
+	for i=1,times do
+		input.press(direction)
+	end
+end
+
 local function moveTo(x, y)
-	local currX = mainmemory.readbyte(0x1cb8)
-	local currY = mainmemory.readbyte(0x1cb7)
+	local currX = ram.byte(0xdcb8)
+	local currY = ram.byte(0xdcb7)
 
-	while x < mainmemory.readbyte(0x1cb8) do
-		player.press("Left")
+	console.log("moving from", currX, currY)
+	console.log("moving to", x, y)
+
+	local diffX = x - currX
+	if diffX > 0 then
+		move("Right", diffX)
+	elseif diffX < 0 then
+		move("Left", -diffX)
 	end
 
-	while x > mainmemory.readbyte(0x1cb8) do
-		player.press("Right")
+	local diffY = y - currY
+	if diffY > 0 then
+		move("Up", diffY)
+	elseif diffY < 0 then
+		move("Down", -diffY)
 	end
-	
-	while y > mainmemory.readbyte(0x1cb7) do
-		player.press("Down")
+end
+--]]
+
+local function moveTo(x, y)
+	while true do
+		local pos = ram.byte(0xdcb8)
+		if pos == x then
+			break
+		elseif pos > x then
+			input.raw("Left")
+		else
+			input.raw("Right")
+		end
 	end
 
-	while y < mainmemory.readbyte(0x1cb7) do
-		player.press("Up")
+	while true do
+		local pos = ram.byte(0xdcb7)
+		if pos == y then
+			break
+		elseif pos > y then
+			input.raw("Up")
+		else
+			input.raw("Down")
+		end
 	end
 end
 
 local function move(direction)
 	local addr
 	if direction == "Down" or direction == "Up" then
-		addr = 0x1cb7
+		addr = 0xdcb7
 	else
-		addr = 0x1b8
+		addr = 0xdcb8
 	end
 
-	local curr = mainmemory.readbyte(addr)
-	while mainmemory.readbyte(addr) == curr do
-		player.press(direction)
+	local curr = ram.byte(addr)
+	while ram.byte(addr) == curr do
+		input.raw(direction)
 	end
 end
 
 local function face(direction)
-	while mainmemory.readbyte(0x1436) == 0 do -- hits 16 for one frame
-		player.press(direction)
-	end
-end
-
-local function selectYes()
-	while mainmemory.readbyte(0x0fcf) ~= 3 do
-		player.wait()
-	end
-
-	while mainmemory.readbyte(0x0fcf) ~= 1 do
-		player.wait()
-	end
-
-	while mainmemory.readbyte(0x0fcf) == 1 do
-		player.press("A")
+	while ram.byte(0xd436) == 0 do -- hits 16 for one frame
+		input.raw(direction)
 	end
 end
 
 local function talkToMum()
-	while mainmemory.readbyte(0x0fcf) ~= 3 do
-		player.press("A")
-	end
+	input.press("A")
 
 	dialog.advance(12)
 
-	selectYes()
-	selectYes()
-	selectYes()
-	selectYes()
+	dialog.selectYes()
+	dialog.selectYes()
+	dialog.selectNo()
+	dialog.selectYes()
 
 	dialog.advance(3)
+	dialog.selectYes()
 
-	selectYes()
-
-	dialog.advance(4)
-	dialog.advanceSpecial()
+	dialog.advance(5)
 end
 
 local function pickPokemon()
-	while mainmemory.readbyte(0x103e) == 0 do -- wtf
-		player.press("A")
-	end
-
-	while mainmemory.readbyte(0x150b) ~= 0 do -- wtf
-		player.press("B")
-	end
+	input.press("A")
+	input.press("B")
 
 	dialog.advance(1)
-	selectYes()
+	dialog.selectYes()
 
 	dialog.advance(4)
-	selectYes()
+	dialog.selectNo()
 end
 
 function newbark.run()
@@ -119,27 +146,34 @@ function newbark.run()
 	move("Up")
 
 	dialog.advance(12)
+	dialog.selectYes()
 
-	selectYes()
+	dialog.advance(26)
 
-	dialog.advance(5)
-	dialog.advanceSpecial()
-
-	dialog.advance(2)
-	dialog.advanceSpecial()
-
-	dialog.advance(11)
-	dialog.advanceSpecial()
-
-	dialog.advance(4)
-	dialog.advanceSpecial()
-
-	-- Autoscroller
+	-- Automatically moved here.
 	moveTo(4, 4)
 	moveTo(7, 4)
 	face("Up")
 
 	pickPokemon()
+
+	dialog.advance(11)
+
+	-- Automatically moved here.
+	moveTo(5, 3)
+	moveTo(5, 8)
+
+	dialog.advance(7)
+
+	moveTo(5, 11)
+	move("Down")
+
+	moveTo(6, 4)
+	moveTo(6, 7)
+	moveTo(2, 7)
+	moveTo(2, 8)
+	moveTo(0, 8)
+	move("Left")
 end
 
 return newbark

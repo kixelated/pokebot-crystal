@@ -1,13 +1,27 @@
 local ram = {}
 
 function ram.byte(addr)
+	memory.usememorydomain("System Bus")
 	return memory.readbyte(addr)
+end
+
+function ram.word(addr)
+	memory.usememorydomain("System Bus")
+	return memory.read_u16_le(addr)
 end
 
 -- Helper that creates an anoymous function.
 local function byteF(addr)
-	return function() ram.byte(addr) end
+	return function()
+		return ram.byte(addr)
+	end
 end
+
+-- Joypad
+ram.joyReleased = byteF(0xffa6)
+ram.joyPressed = byteF(0xffa7)
+ram.joyDown = byteF(0xffa8)
+ram.joyLast = byteF(0xffa9)
 
 -- Menu
 ram.menuSelection = byteF(0xcf74)
