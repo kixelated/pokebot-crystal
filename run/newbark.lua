@@ -3,6 +3,7 @@ local newbark = {}
 local ram = require "game.ram"
 local input = require "game.input"
 local dialog = require "game.dialog"
+local menu = require "game.menu"
 
 --[[
 local directionMap = {
@@ -99,13 +100,15 @@ local function talkToMum()
 
 	dialog.advance(12)
 
-	dialog.selectYes()
-	dialog.selectYes()
-	dialog.selectNo()
-	dialog.selectYes()
+	-- TODO remove press special
+	input.pressSpecial("A") -- select sunday
+
+	menu.pick("YES") -- confirmation
+	menu.pick("NO") -- daylight savings
+	menu.pick("YES") -- confirmation
 
 	dialog.advance(3)
-	dialog.selectYes()
+	menu.pick("YES")
 
 	dialog.advance(5)
 end
@@ -115,10 +118,10 @@ local function pickPokemon()
 	input.press("B")
 
 	dialog.advance(1)
-	dialog.selectYes()
+	menu.pick("YES")
 
 	dialog.advance(4)
-	dialog.selectNo()
+	menu.pick("NO")
 end
 
 function newbark.run()
@@ -146,7 +149,7 @@ function newbark.run()
 	move("Up")
 
 	dialog.advance(12)
-	dialog.selectYes()
+	menu.pick("YES")
 
 	dialog.advance(26)
 

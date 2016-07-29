@@ -62,6 +62,7 @@ function input.press(button)
 	end
 end
 
+-- TODO Remove.
 function input.pressSpecial(button)
 	-- Wait for the button to stop being pressed.
 	while ram.joyLast() ~= 0 do

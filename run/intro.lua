@@ -4,6 +4,7 @@ local input = require "game.input"
 local options = require "game.options"
 local ram = require "game.ram"
 local dialog = require "game.dialog"
+local menu = require "game.menu"
 
 local function skipCutscene()
 	input.press("Start")
@@ -32,11 +33,6 @@ local function startGame()
 	input.press("A")
 end
 
-local function chooseGender(gender)
-	local option = (gender == "female" and 1) or 0
-	dialog.selectOption(option)
-end
-
 local function setHour(hour)
 	while ram.initHourBuffer() == 0 do
 		input.wait()
@@ -51,7 +47,8 @@ local function setHour(hour)
 	end
 
 	input.pressSpecial("A")
-	dialog.selectYes()
+
+	menu.pick("YES") -- confirmation
 end
 
 local function setMinute(minute)
@@ -64,7 +61,8 @@ local function setMinute(minute)
 	end
 
 	input.pressSpecial("A")
-	dialog.selectYes()
+
+	menu.pick("YES") -- confirmation
 end
 
 
@@ -80,8 +78,8 @@ function intro.run()
 	skipCutscene()
 	setOptions()
 	startGame()
-	chooseGender()
 
+	menu.pick("Boy")
 	dialog.advance(3)
 
 	setHour(17)

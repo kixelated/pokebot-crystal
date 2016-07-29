@@ -2,9 +2,14 @@ local dialog = {}
 
 local input = require "game.input"
 local ram = require "game.ram"
+local menu = require "game.menu"
 
 function dialog.wait()
 	local debug = false
+	if debug then
+		console.clear()
+	end
+
 
 	-- This function is stupid complicated but it's the best way I've found to advance dialog.
 	-- For each frame, we check the current position of the Program Counter register in the GameBoy.
@@ -30,21 +35,24 @@ function dialog.wait()
 		local sp = emu.getregister("SP")
 
 		while true do
-			if pc == 0x460 or pc == 0x46b then
-				-- DelayFrame or DelayFrames
-				-- This is called by multiple functions to sleep a frame.
-				-- Grab the next item on the stack to see which function called it.
-				pc = ram.word(sp)
-				sp = sp + 2
+			if pc == 0x45f or pc == 0x460 then
+				-- DelayFrame
+				-- This is called by functions to sleep a frame.
+				-- The off by one is caused when interrupts are enabled/disabled.
+			elseif pc == 0x46b then
+				-- DelayFrames
+				-- Sleeps for multiple frames, calls DelayFrame each time.
 			elseif pc == 0x552 then
 				-- LCD interrupt
 				-- Called after inputting a name for some reason.
-				pc = ram.word(sp)
-				sp = sp + 2
 			else
-				-- Not sure what this 
+				-- Stop unrolling the stack.
 				break
 			end
+
+			-- Grab the next item on the stack to see the caller function.
+			pc = ram.word(sp)
+			sp = sp + 2
 		end
 
 		if pc == 0xaef then
@@ -84,22 +92,5 @@ function dialog.advance(times)
 		input.press("A")
 	end
 end
-
-function dialog.selectOption(index)
-	for i=1,index do
-		input.pressSpecial("Down")
-	end
-
-	input.pressSpecial("A")
-end
-
-function dialog.selectYes()
-	dialog.selectOption(0)
-end
-
-function dialog.selectNo(times)
-	dialog.selectOption(1)
-end
-
 
 return dialog

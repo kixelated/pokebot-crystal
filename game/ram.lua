@@ -10,6 +10,20 @@ function ram.word(addr)
 	return memory.read_u16_le(addr)
 end
 
+function ram.byteBank(addr, bank)
+	if addr >= 0x8000 then
+		return ram.byte(addr)
+	end
+
+	if addr > 0x4000 and addr <= 0x8000 then
+		-- http://gameboy.mongenel.com/dmg/asmmemmap.html
+		addr = (bank * 0x4000) + (addr - 0x4000)
+	end
+
+	memory.usememorydomain("ROM")
+	return memory.readbyte(addr)
+end
+
 -- Helper that creates an anoymous function.
 local function byteF(addr)
 	return function()
@@ -27,7 +41,7 @@ ram.joyLast = byteF(0xffa9)
 ram.menuSelection = byteF(0xcf74)
 ram.menuCursorBuffer = byteF(0xcf88)
 ram.menuCursorY = byteF(0xcfa9)
-ram.menuFlags = byteF(0xcf81) -- bit3 = sound disabled,
+ram.menuFlags = byteF(0xcf81)
 
 -- Options
 ram.optionsIndex = byteF(0xcf63) -- jumptable index
