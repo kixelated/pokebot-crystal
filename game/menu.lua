@@ -2,9 +2,7 @@ local menu = {}
 
 local input = require "game.input"
 local ram = require "game.ram"
-
--- Copied from pokebot, not verified to be correct.
-local CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ():;[]abcdefghijklmnopqrstuvwxyz?????????????????????????????????????????-???!.????????*?/.?0123456789"
+local strings = require "game.strings"
 
 -- Waits for a menu to appear.
 function menu.wait()
@@ -13,40 +11,54 @@ function menu.wait()
 	end
 end
 
--- Returns an array of available options in the current menu.
-function menu.options()
-	local result = {}
-
+-- Returns the options if a menu has the items written inline (ex yes@no@)
+function menu.optionsSimple()
 	local menuBank = ram.byte(0xcf8a)
 	local menuDataPointer = ram.word(0xcf86)
-	local menuDataFlags = ram.byte(0xcf91)
-	local menuDataSize = ram.byte(0xcf92)
+	local menuDataItems = ram.byte(0xcf92)
 
-	local index = 1
-	local string = ""
+	local result = {}
 	local pointer = menuDataPointer + 2
 
-	while index <= menuDataSize do
-		local byte = ram.byteBank(pointer, menuBank)
+	for i=1, menuDataItems do
+		local string, length = strings.parse(pointer, menuBank)
+		result[i] = string
 
-		if byte == 0x50 then
-			-- @ in the code, used as a delimiter
-			result[index] = string
+		pointer = pointer + length + 1
+	end
 
-			string = ""
-			index = index + 1
-		else
-			-- TODO error handling.
-			local charIndex = byte - 0x80 + 1 -- +1 because lua is 1-indexed
-			if charIndex > 0 and charIndex <= string.len(CHARS) then
-				local char = string.sub(CHARS, charIndex, charIndex)
-				string = string..char
-			else
-				error("invalid character: "..bizstring.hex(byte))
-			end
-		end
+	return result
+end
 
-		pointer = pointer + 1
+-- Returns an array of available options in the current menu.
+function menu.options()
+	local menuBank = ram.byte(0xcf8a)
+	local menuData2Pointer = ram.word(0xcf86)
+
+	-- The same as wMenuData2Items for simple menus, otherwise zero.
+	local menuData2Size = ram.byteBank(menuData2Pointer + 1, menuBank)
+	if menuData2Size > 0 then
+		return menu.optionsSimple()
+	end
+
+	local menuIndiciesPointer = ram.word(0xcf93)
+	local menuDataItems = ram.byte(0xcf92)
+
+	local indicies = {}
+	for i=1,menuDataItems do
+		indicies[i] = ram.byteBank(menuIndiciesPointer + i, menuBank)
+	end
+
+	-- Contains 3 pointers for each index: func, string, desc
+	local menuTablePointer = ram.word(0xcf97)
+
+	local result = {}
+	for i,index in ipairs(indicies) do
+		local itemTablePointer = menuTablePointer + (index * 6) + 2
+		local stringPointer = ram.wordBank(itemTablePointer, menuBank)
+		local string = strings.parse(stringPointer, menuBank)
+
+		result[i] = string
 	end
 
 	return result
@@ -68,8 +80,6 @@ function menu.pick(option)
 	end
 
 	if index == 0 then
-		console.log("target:", option)
-		console.log("options:", options)
 		error("option not found")
 	end
 

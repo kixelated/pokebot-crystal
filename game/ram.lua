@@ -24,6 +24,20 @@ function ram.byteBank(addr, bank)
 	return memory.readbyte(addr)
 end
 
+function ram.wordBank(addr, bank)
+	if addr >= 0x8000 then
+		return ram.word(addr)
+	end
+
+	if addr > 0x4000 and addr <= 0x8000 then
+		-- http://gameboy.mongenel.com/dmg/asmmemmap.html
+		addr = (bank * 0x4000) + (addr - 0x4000)
+	end
+
+	memory.usememorydomain("ROM")
+	return memory.read_u16_le(addr)
+end
+
 -- Helper that creates an anoymous function.
 local function byteF(addr)
 	return function()
