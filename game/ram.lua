@@ -1,91 +1,47 @@
 local ram = {}
 
-function ram.byte(addr)
-	memory.usememorydomain("System Bus")
-	return memory.readbyte(addr)
-end
-
-function ram.word(addr)
-	memory.usememorydomain("System Bus")
-	return memory.read_u16_le(addr)
-end
-
-function ram.byteBank(addr, bank)
-	if addr >= 0x8000 then
-		return ram.byte(addr)
-	end
-
-	if addr > 0x4000 and addr <= 0x8000 then
-		-- http://gameboy.mongenel.com/dmg/asmmemmap.html
-		addr = (bank * 0x4000) + (addr - 0x4000)
-	end
-
-	memory.usememorydomain("ROM")
-	return memory.readbyte(addr)
-end
-
-function ram.wordBank(addr, bank)
-	if addr >= 0x8000 then
-		return ram.word(addr)
-	end
-
-	if addr > 0x4000 and addr <= 0x8000 then
-		-- http://gameboy.mongenel.com/dmg/asmmemmap.html
-		addr = (bank * 0x4000) + (addr - 0x4000)
-	end
-
-	memory.usememorydomain("ROM")
-	return memory.read_u16_le(addr)
-end
-
--- Helper that creates an anoymous function.
-local function byteF(addr)
-	return function()
-		return ram.byte(addr)
-	end
-end
+local wram = require "game.wram"
+local hram = require "game.hram"
 
 -- Joypad
-ram.joyReleased = byteF(0xffa6)
-ram.joyPressed = byteF(0xffa7)
-ram.joyDown = byteF(0xffa8)
-ram.joyLast = byteF(0xffa9)
+ram.joyReleased = hram.byteF(0xa6)
+ram.joyPressed = hram.byteF(0xa7)
+ram.joyDown = hram.byteF(0xa8)
+ram.joyLast = hram.byteF(0xa9)
 
 -- Menu
-ram.menuSelection = byteF(0xcf74)
-ram.menuCursorBuffer = byteF(0xcf88)
-ram.menuCursorY = byteF(0xcfa9)
-ram.menuFlags = byteF(0xcf81)
+ram.menuSelection = wram.byteF(0x0f74)
+ram.menuCursorBuffer = wram.byteF(0x0f88)
+ram.menuCursorY = wram.byteF(0x0fa9)
+ram.menuCursorX = wram.byteF(0x0faa)
+ram.menuFlags = wram.byteF(0x0f81)
 
 -- Options
-ram.optionsIndex = byteF(0xcf63) -- jumptable index
-ram.options = byteF(0xcfcc) -- textSpeed = 0x06, battleScene = 0x80, battleStyle = 0x40
-ram.optionsMenuAccount = byteF(0xcfd1)
+ram.optionsIndex = wram.byteF(0x0f63) -- jumptable index
+ram.options = wram.byteF(0x0fcc) -- textSpeed = 0x06, battleScene = 0x80, battleStyle = 0x40
+ram.optionsMenuAccount = wram.byteF(0x0fd1)
 
 -- Overworld
-ram.warpNumber = byteF(0xdcb4)
-ram.mapGroup = byteF(0xdcb5)
-ram.mapNumber = byteF(0xdcb6)
-ram.mapY = byteF(0xdcb7)
-ram.mapX = byteF(0xdcb8)
+ram.warpNumber = wram.byteF(0x1cb4)
+ram.mapGroup = wram.byteF(0x1cb5)
+ram.mapNumber = wram.byteF(0x1cb6)
+ram.mapY = wram.byteF(0x1cb7)
+ram.mapX = wram.byteF(0x1cb8)
 
 -- Visual
-ram.overworldDelay = byteF(0xcfb1)
-ram.textDelayFrames = byteF(0xcfb2)
-ram.vBlankOccurred = byteF(0xcfb3)
-ram.farCallBCBuffer = byteF(0xcfb9)
+ram.overworldDelay = wram.byteF(0x0fb1)
+ram.textDelayFrames = wram.byteF(0x0fb2)
+ram.vBlankOccurred = wram.byteF(0x0fb3)
+ram.farCallBCBuffer = wram.byteF(0x0fb9)
 
 -- Temp
-ram.initHourBuffer = byteF(0xc61c)
-ram.initMinuteBuffer = byteF(0xc626)
-
-ram.stringBuffer2Char2 = byteF(0xd087)
-ram.stringBuffer2Char3 = byteF(0xd088)
+ram.initHourBuffer = wram.byteF(0x061c)
+ram.initMinuteBuffer = wram.byteF(0x0626)
 
 -- Tilemap
-ram.tileDialogAdvance = byteF(0xc606)
+ram.tileDialogAdvance = wram.byteF(0x0606)
 
 -- Highram
-ram.inMenu = byteF(0xffaa)
+ram.inMenu = hram.byteF(0xaa)
 
 return ram

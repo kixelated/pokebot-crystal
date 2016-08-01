@@ -1,7 +1,8 @@
 local dialog = {}
 
 local input = require "game.input"
-local ram = require "game.ram"
+local bus = require "game.bus"
+local hram = require "game.hram"
 local menu = require "game.menu"
 
 function dialog.wait()
@@ -9,7 +10,6 @@ function dialog.wait()
 	if debug then
 		console.clear()
 	end
-
 
 	-- This function is stupid complicated but it's the best way I've found to advance dialog.
 	-- For each frame, we check the current position of the Program Counter register in the GameBoy.
@@ -34,42 +34,70 @@ function dialog.wait()
 		local pc = emu.getregister("PC")
 		local sp = emu.getregister("SP")
 
+		local romBank = hram.byte(0x9d)
+		_, pc = bus.map(pc, romBank)
+
 		while true do
-			if pc == 0x45f or pc == 0x460 then
+			if pc >= 0x45a and pc < 0x468 then
 				-- DelayFrame
 				-- This is called by functions to sleep a frame.
 				-- The off by one is caused when interrupts are enabled/disabled.
-			elseif pc == 0x46b then
+				-- Sleeps for multiple frames, calls DelayFrame each time.
+			elseif pc >= 0x468 and pc < 0x46f then
 				-- DelayFrames
 				-- Sleeps for multiple frames, calls DelayFrame each time.
-			elseif pc == 0x552 then
+			elseif pc == 0x48 or pc == 0x552 then
 				-- LCD interrupt
-				-- Called after inputting a name for some reason.
+				-- Fires randomly, mostly after DelayFrame.
+			elseif pc >= 0x553 and pc < 0x559 then
+				sp = sp + 2
+			elseif pc >= 0x559 and pc < 0x556 then
+				sp = sp + 4
+			elseif pc == 0x566 then
+				-- another LCD interrupt, this time pop the stack
+				sp = sp + 2
+			elseif pc >= 0xa57 and pc < 0xa80 then
+				-- JoyTextDelay
 			else
 				-- Stop unrolling the stack.
 				break
 			end
 
 			-- Grab the next item on the stack to see the caller function.
-			pc = ram.word(sp)
+			pc = bus.word(sp)
 			sp = sp + 2
 		end
 
-		if pc == 0xaef then
+		if pc >= 0xaaf and pc < 0xaef then
 			-- ButtonSound
 			if debug then
 				console.log("ButtonSound")
 			end
 
 			return
-		elseif pc == 0xa39 then 
+		elseif pc >= 0xac6 and pc < 0xaf5 then
+			-- .wait_input
+			-- Called by ButtonSound
+			if debug then
+				console.log(".wait_input")
+			end
+
+			return
+		elseif pc >= 0xa46 and pc < 0xa57 then
+			-- WaitButton
+			if debug then
+				console.log("WaitButton")
+			end
+
+			return
+		elseif pc >= 0xa36 and pc < 0xa46 then 
 			-- JoyWaitAorB
 			if debug then
 				console.log("JoyWaitAorB")
 			end
 
 			return
-		elseif (pc >= 0xa80 and pc < 0xaa5) then
+		elseif pc >= 0xa80 and pc < 0xaa5 then
 			-- WaitPressAorB_BlinkCursor
 			-- This is a busy loop so we need a range of possible locations.
 			if debug then
@@ -78,7 +106,7 @@ function dialog.wait()
 
 			return
 		elseif debug then
-			console.log("unknown", bizstring.hex(pc), bizstring.hex(ram.word(sp)))
+			console.log("unknown "..bizstring.hex(pc).." "..bizstring.hex(bus.word(sp)))
 		end
 
 		input.wait()

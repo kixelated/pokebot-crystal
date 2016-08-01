@@ -1,6 +1,6 @@
 local strings = {}
 
-local ram = require "game.ram"
+local bus = require "game.bus"
 
 -- Copied from charmap.asm
 local CHAR_MAP = {
@@ -178,7 +178,7 @@ function strings.parse(pointer, bank)
 
 	local i = 0
 	while true do
-		local byte = ram.byteBank(pointer + i, bank)
+		local byte = bus.byte(pointer + i, bank)
 
 		local char = CHAR_MAP[byte]
 		if char == nil then
@@ -186,7 +186,7 @@ function strings.parse(pointer, bank)
 		end
 
 		if char == "@" then
-			return string, i
+			return string, i + 1
 		end
 
 		string = string..char

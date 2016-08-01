@@ -1,20 +1,11 @@
 local intro = {}
 
 local input = require "game.input"
-local options = require "game.options"
 local ram = require "game.ram"
 local dialog = require "game.dialog"
 local menu = require "game.menu"
 
-local function skipCutscene()
-	input.press("Start")
-	input.press("Start")
-end
-
 local function setOptions()
-	input.press("Down")
-	input.press("A")
-
 	input.press("Left") -- textSpeed = "high"
 	input.press("Down")
 	input.press("Left") -- battleScene = "off"
@@ -27,10 +18,6 @@ local function setOptions()
 	input.press("Left") -- menuAccount = "on"
 
 	input.press("B")
-end
-
-local function startGame()
-	input.press("A")
 end
 
 local function setHour(hour)
@@ -75,11 +62,14 @@ local function chooseName()
 end
 
 function intro.run()
-	skipCutscene()
-	setOptions()
-	startGame()
+	input.press("Start")
+	input.press("Start")
 
-	menu.pick("Boy")
+	menu.pick("OPTION")
+	setOptions()
+
+	menu.pick("NEW GAME")
+	menu.pick("Girl")
 	dialog.advance(3)
 
 	setHour(17)
@@ -90,10 +80,6 @@ function intro.run()
 	chooseName()
 
 	dialog.advance(7)
-
-	while ram.byte(0xdcb6) == 0 do -- map number
-		input.wait()
-	end
 end
 
 return intro

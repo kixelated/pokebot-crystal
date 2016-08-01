@@ -1,6 +1,5 @@
 local newbark = {}
 
-local ram = require "game.ram"
 local input = require "game.input"
 local dialog = require "game.dialog"
 local menu = require "game.menu"
@@ -25,7 +24,7 @@ local function talkToMum()
 end
 
 local function pickPokemon()
-	input.press("A")
+	player.interact()
 	input.press("B")
 
 	dialog.advance(1)
