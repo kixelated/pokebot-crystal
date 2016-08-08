@@ -33,6 +33,11 @@ function bus.byte(addr, bank)
 	return map.byte(addr)
 end
 
+function bus.bytes(addr, size, bank)
+	map, addr = bus.map(addr, bank)
+	return map.bytes(addr, size)
+end
+
 function bus.word(addr, bank)
 	map, addr = bus.map(addr, bank)
 	return map.word(addr)
