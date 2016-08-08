@@ -16,11 +16,27 @@ function player.facing()
 	return map[wram.byte(0x14de)]
 end
 
-function player.navigate(x, y, onBattle)
-	local currX = wram.byte(0x1cb8)
-	local currY = wram.byte(0x1cb7)
+function player.x()
+	return wram.byte(0x1cb8)
+end
 
-	local path = map.calculatePath(currX, currY, x, y)
+function player.y()
+	return wram.byte(0x1cb7)
+end
+
+function player.navigate(x, y, onBattle)
+	local current = {
+		x = player.x(),
+		y = player.y(),
+		dir = player.facing(),
+	}
+
+	local goal = {
+		x = x,
+		y = y,
+	}
+
+	local path = map.calculatePath(current, goal)
 	if path == nil then
 		error("path not found")
 	end

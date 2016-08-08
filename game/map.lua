@@ -47,6 +47,11 @@ local function navigateCost(node1, node2)
 	local tiles = math.abs(node1.x - node2.x) + math.abs(node1.y - node2.y)
 	local cost = tiles * WALK_COST
 
+	-- There doesn't seem to be a turning penalty, but prefer walking straight anyway.
+	if node1.dir ~= node2.dir then
+		cost = cost + 1
+	end
+
 	local collision = map.tileCollision(node1.x, node1.y)
 	if collision == 0x18 then
 		-- TODO don't hard-code 10% chance for battle.
@@ -90,6 +95,7 @@ local function navigateNextDir(node, direction)
 	local newNode = {
 		x = node.x,
 		y = node.y,
+		dir = direction,
 	}
 
 	if direction == "Right" then
@@ -140,10 +146,7 @@ local function navigateNext(node)
 	return newNodes
 end
 
-function map.calculatePath(startX, startY, goalX, goalY)
-	local start = { x = startX, y = startY }
-	local goal = { x = goalX, y = goalY }
-
+function map.calculatePath(start, goal)
 	local path = astar.find(start, goal, navigateCompare, navigateNext, navigateCost, navigateHeuristic)
 	return path
 end
