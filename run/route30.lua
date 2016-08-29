@@ -4,11 +4,22 @@ local player = require "game.player"
 local battle = require "game.battle"
 local dialog = require "game.dialog"
 local input = require "game.input"
+local wram = require "game.wram"
 
 local function onBattle()
-	battle.start()
-	battle.run()
-	battle.finish()
+	-- Totodile level
+	if wram.byte(0x1cfe) > 5 then
+		battle.run()
+		return
+	end
+
+	-- Enemy level
+	if wram.byte(0x1213) < 3 then
+		battle.run()
+		return
+	end
+
+	battle.fight()
 end
 
 function route30.run()

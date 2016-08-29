@@ -3,6 +3,7 @@ local player = {}
 local wram = require "game.wram"
 local input = require "game.input"
 local map = require "game.map"
+local battle = require "game.battle"
 
 function player.facing() 
 	local map = {
@@ -53,8 +54,7 @@ end
 
 function player.moveTo(x, y, onBattle)
 	while true do
-		local battleType = wram.byte(0x122d)
-		if battleType ~= 0 then
+		if battle.active() then
 			onBattle()
 		end
 		

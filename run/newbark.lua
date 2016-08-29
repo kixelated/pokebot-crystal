@@ -89,4 +89,42 @@ function newbark.run()
 	player.move("Left")
 end
 
+function newbark.run2()
+	player.moveTo(0, 8) -- starting position
+	player.moveTo(2, 8)
+	player.moveTo(2, 7)
+	player.moveTo(6, 7)
+	player.moveTo(6, 4)
+	player.move("Up")
+
+	player.moveTo(4, 3)
+	dialog.advance(8)
+
+	input.press("Right")
+	input.press("A")
+	input.press("Start")
+	input.press("A")
+
+	dialog.advance(2)
+
+	player.moveTo(5, 3)
+	player.face("Up")
+	player.interact()
+
+	dialog.advance(27)
+
+	player.moveTo(5, 8)
+	dialog.advance(8)
+
+	player.moveTo(5, 11)
+	player.move("Down")
+
+	player.moveTo(6, 4)
+	player.moveTo(6, 7)
+	player.moveTo(2, 7)
+	player.moveTo(2, 8)
+	player.moveTo(0, 8)
+	player.move("Left")
+end
+
 return newbark
