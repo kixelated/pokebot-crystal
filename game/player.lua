@@ -59,13 +59,13 @@ function player.moveTo(x, y, onBattle)
 		end
 		
 		if wram.byte(0x1cb8) > x then
-			input.raw("Left")
+			input.touch("Left")
 		elseif wram.byte(0x1cb8) < x then
-			input.raw("Right")
+			input.touch("Right")
 		elseif wram.byte(0x1cb7) > y then
-			input.raw("Up")
+			input.touch("Up")
 		elseif wram.byte(0x1cb7) < y then
-			input.raw("Down")
+			input.touch("Down")
 		else
 			break
 		end
@@ -82,7 +82,7 @@ function player.move(direction)
 
 	local curr = wram.byte(addr)
 	while wram.byte(addr) == curr do
-		input.raw(direction)
+		input.touch(direction)
 	end
 end
 

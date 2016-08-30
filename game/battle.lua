@@ -16,44 +16,32 @@ local function start(action)
 		input.wait()
 	end
 
-	startTurn = false
-	pressA = false
-
 	local onStartTurn = function()
-		startTurn = true
+		menu.pick(action)
+		if action == "FIGHT" then
+			input.press("A")
+		end
 	end
 
 	local onDialog = function()
-		pressA = true
+		input.press("A")
 	end
 
-	local eventBattleTurn = watch.execute(onStartTurn, 0x3c12f)
-	local eventButtonSound = watch.execute(onDialog, 0xaaf)
-	local eventJoyWait = watch.execute(onDialog, 0xa36)
-	local eventWaitPress = watch.execute(onDialog, 0xa80)
-	local eventSimpleWaitPress = watch.execute(onDialog, 0xaa5)
+	local eventBattleTurn = watch.onexecute(0x3c12f, onStartTurn)
+	local eventButtonSound = watch.onexecute(0xaaf, onDialog)
+	local eventJoyWait = watch.onexecute(0xa36, onDialog)
+	local eventWaitPress = watch.onexecute(0xa80, onDialog)
+	local eventSimpleWaitPress = watch.onexecute(0xaa5, onDialog)
 
 	while battle.active() do
-		if pressA then
-			input.press("A")
-			pressA = false
-		elseif startTurn then
-			menu.pick(action)
-			if action == "FIGHT" then
-				input.press("A")
-			end
-
-			startTurn = false
-		else
-			input.wait()
-		end
+		input.wait()
 	end	
 
-	event.unregisterbyid(eventBattleTurn)
-	event.unregisterbyid(eventButtonSound)
-	event.unregisterbyid(eventJoyWait)
-	event.unregisterbyid(eventWaitPress)
-	event.unregisterbyid(eventSimpleWaitPress)
+	watch.remove(eventBattleTurn)
+	watch.remove(eventButtonSound)
+	watch.remove(eventJoyWait)
+	watch.remove(eventWaitPress)
+	watch.remove(eventSimpleWaitPress)
 end
 
 function battle.run()

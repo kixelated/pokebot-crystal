@@ -1,6 +1,7 @@
 local input = {}
 
 local ram = require "game.ram"
+local watch = require "game.watch"
 
 local buttonMask = {
 	A      = 0,
@@ -13,17 +14,25 @@ local buttonMask = {
 	Down   = 7,
 }
 
-function input.raw(button)
+function input.set(button)
 	inputTable = {}
 	if button ~= nil then
 		inputTable[button] = true
 	end
 
 	joypad.set(inputTable)
-	emu.frameadvance()
 end
 
-input.wait = input.raw
+function input.touch(button)
+	input.set(button)
+	input.wait()
+	input.set()
+end
+
+function input.wait()
+	emu.frameadvance()
+	watch.yield()
+end
 
 -- Press button for a frame when possible.
 function input.press(button)
@@ -58,7 +67,7 @@ function input.press(button)
 
 	-- Wait for the button to register as pressed.
 	while not bit.check(ram.joyDown(), mask) do
-		input.raw(button)
+		input.touch(button)
 	end
 end
 
@@ -69,7 +78,7 @@ function input.pressSpecial(button)
 		input.wait()
 	end
 
-	input.press(button)
+	input.touch(button)
 end
 
 return input

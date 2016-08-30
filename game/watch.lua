@@ -2,8 +2,26 @@ local watch = {}
 
 local hram = require "game.hram"
 
+local queue = {}
+
+function watch.push(func)
+	table.insert(queue, func)
+end
+
+function watch.pop()
+	return table.remove(queue, 1)
+end
+
+function watch.yield()
+	local func = watch.pop()
+	while func ~= nil do
+		func()
+		func = watch.pop()
+	end
+end
+
 -- Watch for a rom address to be executed, including support for banks.
-function watch.execute(luaf, address)
+function watch.onexecute(address, luaf)
 	local bank = math.floor(address / 0x4000)
 	address = address % 0x4000
 
@@ -19,10 +37,14 @@ function watch.execute(luaf, address)
 			end
 		end
 
-		luaf()
+		watch.push(luaf)
 	end
 
 	return event.onmemoryexecute(wrapper, address)
+end
+
+function watch.remove(id)
+	return event.unregisterbyid(id)
 end
 
 return watch
