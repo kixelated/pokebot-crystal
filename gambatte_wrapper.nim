@@ -33,10 +33,10 @@
 {.compile: "gambatte/libgambatte/src/video/sprite_mapper.cpp".}
 {.compile: "gambatte/libgambatte/src/file/file.cpp".}
 
-type GB* {.header: "gambatte.h", importcpp: "gambatte::GB".} = object
-proc reset*(gb: var GB) {.header: "gambatte.h", importcpp: "#.reset()".}
-proc load*(gb: var GB, romfile: cstring, flags: cint = 0): cint {.header: "gambatte.h", importcpp: "#.load(@)".}
-#proc runFor(gb: var GB, videoBuf: ptr, pitch: cint, audioBuf: ptr, samples cint): cint {.header: "gambatte.h", importcpp: "#.runFor(@)".}
+type size_t* {.importcpp: "size_t".} = uint
+type uint_least32_t {.importcpp: "uint_least32_t".} = uint32 # TODO
 
-# std::ptrdiff_t runFor(gambatte::uint_least32_t *videoBuf, std::ptrdiff_t pitch,
-#                      gambatte::uint_least32_t *audioBuf, std::size_t &samples);
+type GB* {.header: "gambatte.h", importcpp: "gambatte::GB".} = object
+proc reset*(this: var GB) {.header: "gambatte.h", importcpp: "#.reset()".}
+proc load*(this: var GB, romfile: cstring, flags: cint = 0): cint {.header: "gambatte.h", importcpp: "#.load(@)".}
+proc runFor*(this: var GB, videoBuf: pointer, pitch: cint, audioBuf: pointer, samples: var size_t): cint {.header: "gambatte.h", importcpp: "#.runFor(@)".}
