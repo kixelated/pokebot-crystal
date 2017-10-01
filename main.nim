@@ -1,5 +1,5 @@
 import gambatte_wrapper as gambatte
-import sdl2
+import sdl2, sdl2/gfx
 
 var gb: GB
 discard gb.load("rom/crystal.gbc")
@@ -9,11 +9,15 @@ discard gb.getInput()
 discard sdl2.init(INIT_VIDEO)
 
 var window = sdl2.createWindow("Nimtendo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 320, 288, SDL_WINDOW_SHOWN)
-var renderer = window.createRenderer(-1, 0)
+var renderer = window.createRenderer(-1, Renderer_Software)
 var texture = renderer.createTexture(SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 160, 144);
 
 renderer.setDrawColor(0, 0, 0, 255)
 renderer.clear()
+
+var fpsman: FpsManager
+fpsman.init
+fpsman.setFrameRate(144)
 
 var evt = defaultEvent
 var runGame = true
@@ -69,6 +73,8 @@ while runGame:
     doneSamples = gb.runFor(pixels, 160, audio, runSamples)
 
   texture.unlockTexture()
+
+  fpsman.delay
 
   renderer.copy(texture, nil, nil)
   renderer.present()
