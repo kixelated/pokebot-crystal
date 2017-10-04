@@ -8,12 +8,12 @@ type ptrdiff_t* {.importcpp: "std::ptrdiff_t".} = int32
 
 type GB* {.header: "gambatte.h", importcpp: "gambatte::GB".} = object
 
-proc reset*(this: var GB) {.header: "gambatte.h", importcpp: "#.reset()".}
-proc load*(this: var GB, romfile: cstring, flags: cint = 0): cint {.header: "gambatte.h", importcpp: "#.load(@)".}
-proc runFor*(this: var GB, videoBuf: pointer, pitch: ptrdiff_t, audioBuf: pointer, samples: var size_t): ptrdiff_t {.header: "gambatte.h", importcpp: "#.runFor(@)".}
+proc reset*(self: var GB) {.header: "gambatte.h", importcpp: "#.reset()".}
+proc load*(self: var GB, romfile: cstring, flags: cint = 0): cint {.header: "gambatte.h", importcpp: "#.load(@)".}
+proc runFor*(self: var GB, videoBuf: pointer, pitch: ptrdiff_t, audioBuf: pointer, samples: var size_t): ptrdiff_t {.header: "gambatte.h", importcpp: "#.runFor(@)".}
 
-proc getInput*(this: var GB): cuint {.header: "gambatte.h", importcpp: "#.getInput()".}
-proc setInput*(this: var GB, button: cuint) {.header: "gambatte.h", importcpp: "#.setInput(@)".}
+proc getInput*(self: var GB): cuint {.header: "gambatte.h", importcpp: "#.getInput()".}
+proc setInput*(self: var GB, button: cuint) {.header: "gambatte.h", importcpp: "#.setInput(@)".}
 
 const
   BUTTON_A*: cuint = 0x01
