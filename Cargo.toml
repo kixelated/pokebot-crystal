@@ -1,0 +1,9 @@
+[package]
+name = "pokebot-crystal"
+version = "0.1.0"
+authors = ["kixelated <kixelated@gmail.com>"]
+links = "z"
+
+[dependencies]
+libc = "0.2.0"
+sdl2 = "0.30.0"
