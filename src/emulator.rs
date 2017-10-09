@@ -10,6 +10,8 @@ extern {
     fn gambatte_destroy(gb: *mut Gamebatte);
     fn gambatte_load(gb: *mut Gamebatte, file: *const libc::c_char) -> libc::c_int;
     fn gambatte_run(gb: *mut Gamebatte, video: *mut u8, pitch: libc::ptrdiff_t, audio: *mut u8, samples: *mut libc::size_t) -> libc::ptrdiff_t;
+    fn gambatte_get_input(gb: *mut Gamebatte) -> libc::c_uint;
+    fn gambatte_set_input(gb: *mut Gamebatte, input: libc::c_uint);
 }
 
 pub struct Emulator {
@@ -30,13 +32,26 @@ pub enum LoadError {
     Unknown,
 }
 
+pub enum Button {
+  A = 0x01,
+  B = 0x02,
+  Select = 0x04,
+  Start = 0x08,
+  Right = 0x10,
+  Left = 0x20,
+  Up = 0x40,
+  Down = 0x80,
+}
+
+pub type Input = u32;
+
 pub fn new() -> Emulator {
     let gb = unsafe { gambatte_init() };
     Emulator{gb}
 }
 
 impl Emulator {
-    pub fn load(&self, file: &str) -> Result<(), LoadError> {
+    pub fn load(&mut self, file: &str) -> Result<(), LoadError> {
         let file = CString::new(file).unwrap().into_raw();
         let result = unsafe { gambatte_load(self.gb, file) };
         let _ = unsafe { CString::from_raw(file) };
@@ -56,7 +71,7 @@ impl Emulator {
         }
     }
 
-    pub fn run(&self, video: &mut [u8], audio: &mut [u8]) {
+    pub fn run(&mut self, video: &mut [u8], audio: &mut [u8]) {
         loop {
             let mut samples: libc::size_t = 35112;
             let offset = unsafe { gambatte_run(self.gb, video.as_mut_ptr(), 160, audio.as_mut_ptr(), &mut samples) };
@@ -64,6 +79,14 @@ impl Emulator {
                 break
             }
         }
+    }
+
+    pub fn get_input(&mut self) -> Input {
+        unsafe { gambatte_get_input(self.gb) }
+    }
+
+    pub fn set_input(&mut self, input: Input) {
+        unsafe { gambatte_set_input(self.gb, input) }
     }
 }
 
