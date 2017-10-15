@@ -2,20 +2,26 @@ extern crate libc;
 
 use std::ffi::CString;
 
-enum Gamebatte {}
+enum Gambatte {}
 
 #[link(name = "gambatte")]
 extern {
-    fn gambatte_init() -> *mut Gamebatte;
-    fn gambatte_destroy(gb: *mut Gamebatte);
-    fn gambatte_load(gb: *mut Gamebatte, file: *const libc::c_char) -> libc::c_int;
-    fn gambatte_run(gb: *mut Gamebatte, video: *mut u8, pitch: libc::ptrdiff_t, audio: *mut u8, samples: *mut libc::size_t) -> libc::ptrdiff_t;
-    fn gambatte_get_input(gb: *mut Gamebatte) -> libc::c_uint;
-    fn gambatte_set_input(gb: *mut Gamebatte, input: libc::c_uint);
+    fn gambatte_init() -> *mut Gambatte;
+    fn gambatte_destroy(gb: *mut Gambatte);
+
+    fn gambatte_load(gb: *mut Gambatte, file: *const libc::c_char) -> libc::c_int;
+    fn gambatte_run(gb: *mut Gambatte, video: *mut u8, pitch: libc::ptrdiff_t, audio: *mut u8, samples: *mut libc::size_t) -> libc::ptrdiff_t;
+
+    #[allow(dead_code)]
+    fn gambatte_get_input(gb: *mut Gambatte) -> libc::c_uint;
+    fn gambatte_set_input(gb: *mut Gambatte, input: libc::c_uint);
+
+    fn gambatte_save_state(gb: *mut Gambatte, num: libc::c_int) -> bool;
+    fn gambatte_load_state(gb: *mut Gambatte, num: libc::c_int) -> bool;
 }
 
 pub struct Emulator {
-    gb: *mut Gamebatte
+    gb: *mut Gambatte
 }
 
 #[derive(Debug)]
@@ -33,14 +39,15 @@ pub enum LoadError {
 }
 
 pub enum Button {
-  A = 0x01,
-  B = 0x02,
-  Select = 0x04,
-  Start = 0x08,
-  Right = 0x10,
-  Left = 0x20,
-  Up = 0x40,
-  Down = 0x80,
+    None = 0,
+    A = 0x01,
+    B = 0x02,
+    Select = 0x04,
+    Start = 0x08,
+    Right = 0x10,
+    Left = 0x20,
+    Up = 0x40,
+    Down = 0x80,
 }
 
 pub type Input = u32;
@@ -81,12 +88,29 @@ impl Emulator {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_input(&mut self) -> Input {
         unsafe { gambatte_get_input(self.gb) }
     }
 
     pub fn set_input(&mut self, input: Input) {
         unsafe { gambatte_set_input(self.gb, input) }
+    }
+
+    pub fn save_state(&mut self, num: i32) -> Result<(), &str> {
+        let result = unsafe { gambatte_save_state(self.gb, num) };
+        match result {
+            true => Ok(()),
+            false => Err("failed to save state"),
+        }
+    }
+
+    pub fn load_state(&mut self, num: i32) -> Result<(), &str> {
+        let result = unsafe { gambatte_load_state(self.gb, num) };
+        match result {
+            true => Ok(()),
+            false => Err("failed to load state"),
+        }
     }
 }
 

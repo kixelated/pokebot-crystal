@@ -2,10 +2,12 @@ use emulator;
 
 extern crate sdl2;
 use self::sdl2::keyboard::Keycode; // TODO why self::
+use self::sdl2::keyboard::Scancode; // TODO why self::
 
 pub struct Window {
     canvas: sdl2::render::WindowCanvas,
     events: sdl2::EventPump,
+    fpsman: sdl2::gfx::framerate::FPSManager,
 
     video: [u8; 160*144*4],
     audio: [u8; (35112+2064)*4],
@@ -20,11 +22,13 @@ impl Window {
         let canvas = window.into_canvas().software().build().unwrap();
 
         let events = sdl_context.event_pump().unwrap();
+        let mut fpsman = sdl2::gfx::framerate::FPSManager::new();
+        fpsman.set_framerate(180).unwrap();
 
         let video = [0; 160*144*4];
         let audio = [0; (35112+2064)*4];
 
-        Self{canvas, events, video, audio}
+        Self{canvas, events, fpsman, video, audio}
     }
 
     pub fn run(&mut self, emu: &mut emulator::Emulator) -> bool {
@@ -37,21 +41,26 @@ impl Window {
             };
         }
 
-        emu.set_input(self.emu_input());
+        self.handle_events(emu);
+
         emu.run(&mut self.video, &mut self.audio);
 
         texture.update(None, &self.video, 160*4).unwrap();
         self.canvas.copy(&texture, None, None).unwrap();
         self.canvas.present();
 
+        self.fpsman.delay();
+
         return false;
     }
 
-    fn emu_input(&self) -> emulator::Input {
+    fn handle_events(&self, emu: &mut emulator::Emulator) {
         let mut input: emulator::Input = 0;
 
-        for key in self.events.keyboard_state().pressed_scancodes() {
-            let button = match Keycode::from_scancode(key).unwrap() {
+        for scancode in self.events.keyboard_state().pressed_scancodes() {
+            let keycode = Keycode::from_scancode(scancode).unwrap();
+
+            let button = match keycode {
                 Keycode::D => emulator::Button::A,
                 Keycode::C => emulator::Button::B,
                 Keycode::RShift => emulator::Button::Select,
@@ -60,12 +69,36 @@ impl Window {
                 Keycode::Left => emulator::Button::Left,
                 Keycode::Up => emulator::Button::Up,
                 Keycode::Down => emulator::Button::Down,
-                _ => continue,
+                _ => emulator::Button::None,
             };
 
             input = input | button as u32;
+
+            let state = match keycode {
+                Keycode::F1 => 1,
+                Keycode::F2 => 2,
+                Keycode::F3 => 3,
+                Keycode::F4 => 4,
+                Keycode::F5 => 5,
+                Keycode::F6 => 6,
+                Keycode::F7 => 7,
+                Keycode::F8 => 8,
+                Keycode::F9 => 9,
+                Keycode::F10 => 10,
+                Keycode::F11 => 11,
+                Keycode::F12 => 12,
+                _ => 0,
+            };
+
+            if state != 0 {
+                if self.events.keyboard_state().is_scancode_pressed(Scancode::LCtrl) {
+                    emu.save_state(state).unwrap();
+                } else {
+                    emu.load_state(state).unwrap();
+                }
+            }
         }
 
-        return input;
+        emu.set_input(input);
     }
 }

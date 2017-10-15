@@ -6,4 +6,7 @@ links = "z"
 
 [dependencies]
 libc = "0.2.0"
-sdl2 = "0.30.0"
+
+[dependencies.sdl2]
+version = "0.30.0"
+features = ["gfx"]
