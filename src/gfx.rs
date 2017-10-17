@@ -1,6 +1,7 @@
+extern crate sdl2;
+
 use emulator;
 
-extern crate sdl2;
 use self::sdl2::keyboard::Keycode; // TODO why self::
 use self::sdl2::keyboard::Scancode; // TODO why self::
 
@@ -8,9 +9,6 @@ pub struct Window {
     canvas: sdl2::render::WindowCanvas,
     events: sdl2::EventPump,
     fpsman: sdl2::gfx::framerate::FPSManager,
-
-    video: [u8; 160*144*4],
-    audio: [u8; (35112+2064)*4],
 }
 
 impl Window {
@@ -18,34 +16,30 @@ impl Window {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
 
-        let window = video_subsystem.window("Pokemon Rust", 320, 288).build().unwrap();
+        let window = video_subsystem
+            .window("Pokemon Rust", 320, 288)
+            .build()
+            .unwrap();
         let canvas = window.into_canvas().software().build().unwrap();
 
         let events = sdl_context.event_pump().unwrap();
         let mut fpsman = sdl2::gfx::framerate::FPSManager::new();
         fpsman.set_framerate(180).unwrap();
 
-        let video = [0; 160*144*4];
-        let audio = [0; (35112+2064)*4];
-
-        Self{canvas, events, fpsman, video, audio}
+        Self {
+            canvas,
+            events,
+            fpsman,
+        }
     }
 
-    pub fn run(&mut self, emu: &mut emulator::Emulator) -> bool {
+    pub fn present(&mut self, video: [u8; 92160], audio: [u8; 148704]) -> bool {
         let texture_creator = self.canvas.texture_creator();
-        let mut texture = texture_creator.create_texture_streaming(sdl2::pixels::PixelFormatEnum::ARGB8888, 160, 144).unwrap();
+        let mut texture = texture_creator
+            .create_texture_streaming(sdl2::pixels::PixelFormatEnum::ARGB8888, 160, 144)
+            .unwrap();
 
-        for event in self.events.poll_iter() {
-            if let sdl2::event::Event::Quit {..} = event {
-                return true;
-            };
-        }
-
-        self.handle_events(emu);
-
-        emu.run(&mut self.video, &mut self.audio);
-
-        texture.update(None, &self.video, 160*4).unwrap();
+        texture.update(None, &video, 160 * 4).unwrap();
         self.canvas.copy(&texture, None, None).unwrap();
         self.canvas.present();
 
@@ -54,8 +48,14 @@ impl Window {
         return false;
     }
 
-    fn handle_events(&self, emu: &mut emulator::Emulator) {
-        let mut input: emulator::Input = 0;
+    pub fn handle_events(&mut self, emu: &mut emulator::Emulator) -> Result<(), &str> {
+        for event in self.events.poll_iter() {
+            if let sdl2::event::Event::Quit { .. } = event {
+                return Err("quit");
+            };
+        }
+
+        let mut input = 0; //emu.get_input();
 
         for scancode in self.events.keyboard_state().pressed_scancodes() {
             let keycode = Keycode::from_scancode(scancode).unwrap();
@@ -91,7 +91,10 @@ impl Window {
             };
 
             if state != 0 {
-                if self.events.keyboard_state().is_scancode_pressed(Scancode::LCtrl) {
+                if self.events.keyboard_state().is_scancode_pressed(
+                    Scancode::LCtrl,
+                )
+                {
                     emu.save_state(state).unwrap();
                 } else {
                     emu.load_state(state).unwrap();
@@ -100,5 +103,7 @@ impl Window {
         }
 
         emu.set_input(input);
+
+        Ok(())
     }
 }

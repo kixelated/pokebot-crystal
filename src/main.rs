@@ -1,14 +1,13 @@
 mod emulator;
+mod game;
 mod gfx;
 
 fn main() {
-    let mut emu = emulator::new();
-    emu.load("rom/crystal.gbc").unwrap();
+    let mut game = game::Game::new();
 
-    let mut window = gfx::Window::new();
+    game.load("rom/crystal.gbc").unwrap();
 
     loop {
-        let quit = window.run(&mut emu);
-        if quit { return }
+        game.press(emulator::Button::Start);
     }
 }
